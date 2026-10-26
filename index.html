@@ -1,43 +1,411 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automated Land Vetting | Legal Portals</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+    <title>A B M Rashedul Islam | Associate Lawyer - Capital Law Chamber</title>
+    
+    <!-- Favicon Integration -->
+    <link rel="icon" type="image/jpeg" href="favic_2.jpg">
+    <link rel="shortcut icon" type="image/jpeg" href="favic_2.jpg">
 
-    <!-- Header Section -->
-    <header class="bg-slate-900 text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-wide">Land Vetting System</h1>
-            <nav class="space-x-6 text-sm font-medium">
-                <a href="#" class="hover:text-blue-400 transition">Home</a>
-                <a href="#" class="hover:text-blue-400 transition">Vetting Tools</a>
-                <a href="#" class="hover:text-blue-400 transition">Contact</a>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase JS SDK Integration with Firestore Transactions -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+        import { 
+            getFirestore, 
+            doc, 
+            runTransaction, 
+            collection, 
+            getDocs 
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDdMJAQBOu0l5juW5ZV8q6qgY3uZ1mRQ38",
+            authDomain: "my-portfolio-5a45e.firebaseapp.com",
+            projectId: "my-portfolio-5a45e",
+            storageBucket: "my-portfolio-5a45e.firebasestorage.app",
+            messagingSenderId: "406719907956",
+            appId: "1:406719907956:web:c68febbc4f0aebc145a921",
+            measurementId: "G-WKWJGKd743"
+        };
+
+        // Initialize Firebase, Analytics, and Firestore
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        /**
+         * Prevents duplicate bookings using Firestore Transactions.
+         * Creates a unique document ID based on date and time slot.
+         */
+        window.bookAppointment = async function(date, timeSlot, userDetails) {
+            const formattedTime = timeSlot.replace(':', '-');
+            const bookingId = `${date}_${formattedTime}`;
+            const bookingRef = doc(db, "bookings", bookingId);
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const bookingDoc = await transaction.get(bookingRef);
+
+                    if (bookingDoc.exists()) {
+                        throw new Error("SLOT_TAKEN");
+                    }
+
+                    transaction.set(bookingRef, {
+                        name: userDetails.name,
+                        email: userDetails.email,
+                        phone: userDetails.phone,
+                        service: userDetails.service || "General Consultation",
+                        date: date,
+                        timeSlot: timeSlot,
+                        createdAt: new Date().toISOString()
+                    });
+                });
+
+                return { success: true };
+            } catch (error) {
+                if (error.message === "SLOT_TAKEN" || error.code === "permission-denied") {
+                    return { 
+                        success: false, 
+                        message: "This slot is already booked! Please select a different time or date." 
+                    };
+                }
+                return { 
+                    success: false, 
+                    message: "Booking failed. Please check your connection and try again." 
+                };
+            }
+        };
+
+        /**
+         * Retrieves existing booked slots for a given date to disable them in UI dropdowns/options.
+         */
+        window.getBookedSlotsForDate = async function(selectedDate) {
+            try {
+                const querySnapshot = await getDocs(collection(db, "bookings"));
+                const bookedSlots = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.date === selectedDate) {
+                        bookedSlots.push(data.timeSlot);
+                    }
+                });
+                return bookedSlots;
+            } catch (err) {
+                console.error("Error fetching booked slots:", err);
+                return [];
+            }
+        };
+    </script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        azureBlue: '#C8102E',    /* Signature Capital Law Chamber Red */
+                        navyBlue: '#101B33',     /* Deep Royal Navy Blue */
+                        deepGreen: '#8B0000',    /* Dark Crimson Red */
+                        lightBlue: '#E5E7EB',    /* Medium Light Gray */
+                        skyBlue: '#87CEEB',      /* Sky Blue Accent */
+                        virginBlue: '#FEE2E2',   /* Soft Red Tint */
+                        softBlue: '#F9FAFB',     /* Pure Light Neutral */
+                        turquoiseGreen: '#D00000',/* Vibrant Red Accent */
+                        mintGreen: '#F3F4F6',    /* Card Background Light Gray */
+                        softGreen: '#FEF2F2',    /* Very Soft Red Highlight */
+                        darkText: '#1E293B',     /* Slate Dark Text */
+                        subtleGray: '#475569',   /* Muted Text Gray */
+                        softWhite: '#F3F4F6',    /* Matched Full Gray Background */
+                        fbBlue: '#1877F2',       /* Official Facebook Blue */
+                    },
+                    fontFamily: {
+                        algerian: ['Algerian', 'Impact', 'Copperplate Gothic Bold', 'Georgia', 'serif'],
+                        bookAntiqua: ['"Book Antiqua"', 'Palatino', 'Georgia', 'serif'],
+                        garamond: ['Garamond', 'Georgia', 'serif'],
+                        calibri: ['Calibri', 'Candara', 'Segoe UI', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .font-algerian { font-family: Algerian, Impact, 'Copperplate Gothic Bold', Georgia, serif; font-style: normal !important; }
+        .font-bookAntiqua { font-family: 'Book Antiqua', Palatino, 'Palatino Linotype', Georgia, serif; font-style: normal !important; }
+        .font-garamond { font-family: Garamond, Georgia, serif; font-style: normal !important; }
+        .font-calibri { font-family: Calibri, Candara, 'Segoe UI', sans-serif; font-style: normal !important; }
+
+        /* Universal strict non-italic policy */
+        * { font-style: normal !important; }
+
+        /* Continuous Full Page Gradient */
+        body {
+            background: linear-gradient(180deg, #2B0000 0%, #4A0000 10%, #3B0D11 25%, #20242B 55%, #2B303A 80%, #1C2026 100%) !important;
+            background-attachment: fixed;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1C2026; }
+        ::-webkit-scrollbar-thumb { background: #C8102E; border-radius: 4px; }
+
+        .glass-card-light {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dark-blue-green-border {
+            border: 3px solid transparent;
+            background-image: linear-gradient(white, white), linear-gradient(135deg, #C8102E 0%, #1E232A 50%, #8B0000 100%);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+        }
+
+        .photo-glow { box-shadow: 0 0 35px rgba(200, 16, 46, 0.4); }
+
+        /* Thin Black Text Outline */
+        .thin-black-stroke {
+            -webkit-text-stroke: 0.5px black;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        }
+        @media (min-width: 640px) {
+            .thin-black-stroke {
+                -webkit-text-stroke: 0.8px black;
+            }
+        }
+    </style>
+</head>
+<body class="font-calibri text-white antialiased selection:bg-azureBlue selection:text-white flex flex-col min-h-screen">
+
+    <header class="relative w-full z-40">
+        <!-- Top Header -->
+        <div class="bg-[#420404] py-4 sm:py-6 px-4 text-center shadow-lg">
+            <a href="#home" class="inline-block group focus:outline-none">
+                <h1 class="font-algerian text-2xl sm:text-4xl md:text-5xl font-bold text-white tracking-widest thin-black-stroke transition-colors duration-300 group-hover:text-[#FFF4CC]">
+                    CAPITAL LAW CHAMBER
+                </h1>
+            </a>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-2 mb-2 relative z-10">
+            <nav class="w-full max-w-7xl mx-auto dark-blue-green-border rounded-2xl shadow-xl p-3 sm:p-4 bg-white flex items-center justify-between gap-3 text-darkText">
+                <div class="flex items-center gap-2 pl-2">
+                    <div class="w-8 h-8 rounded-full bg-azureBlue text-white flex items-center justify-center font-bookAntiqua font-bold text-sm">
+                        ABM
+                    </div>
+                    <span class="font-bookAntiqua font-bold text-navyBlue text-base hidden sm:inline-block">
+                        RASHEDUL ISLAM
+                    </span>
+                </div>
+
+                <button id="mobileMenuBtn" aria-label="Toggle navigation" class="md:hidden text-navyBlue text-2xl focus:outline-none p-1">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <!-- Navigation Bar -->
+                <div class="hidden md:flex items-center space-x-1 lg:space-x-2 font-calibri text-sm lg:text-base font-bold">
+                    <a href="#home" class="px-2.5 py-1.5 rounded-lg bg-azureBlue text-white hover:bg-navyBlue transition shadow-sm">Home</a>
+                    <a href="gallery.html" class="px-2.5 py-1.5 rounded-lg bg-azureBlue text-white hover:bg-navyBlue transition shadow-sm">Gallery</a>
+                    <a href="#about" class="px-2.5 py-1.5 rounded-lg bg-azureBlue text-white hover:bg-navyBlue transition shadow-sm">About</a>
+                    <a href="#services" class="px-2.5 py-1.5 rounded-lg bg-azureBlue text-white hover:bg-navyBlue transition shadow-sm">Practice Areas</a>
+                    <a href="#experience" class="px-2.5 py-1.5 rounded-lg bg-azureBlue text-white hover:bg-navyBlue transition shadow-sm">Experience</a>
+                    <a href="booking.html" class="px-2.5 py-1.5 rounded-lg bg-azureBlue text-white hover:bg-navyBlue transition shadow-sm">Appointment</a>
+                    <a href="#contact" class="px-2.5 py-1.5 rounded-lg bg-azureBlue text-white hover:bg-navyBlue transition shadow-sm">Contact</a>
+                    <a href="calculator.html" class="px-2.5 py-1.5 rounded-lg bg-azureBlue text-white hover:bg-navyBlue transition shadow-sm">Land Calculator</a>
+                    <a href="succession_calculator.html" class="px-2.5 py-1.5 rounded-lg bg-azureBlue text-white hover:bg-navyBlue transition shadow-sm">Succession Calculator</a>
+                </div>
             </nav>
+
+            <!-- Mobile Menu -->
+            <div id="mobileMenu" class="hidden md:hidden bg-white text-navyBlue rounded-xl p-4 shadow-xl border border-navyBlue/20 mt-2 space-y-2 font-calibri font-bold">
+                <a href="#home" class="block py-2 px-3 bg-azureBlue text-white hover:bg-navyBlue rounded-lg transition">Home</a>
+                <a href="gallery.html" class="block py-2 px-3 bg-azureBlue text-white hover:bg-navyBlue rounded-lg transition">Gallery</a>
+                <a href="#about" class="block py-2 px-3 bg-azureBlue text-white hover:bg-navyBlue rounded-lg transition">About</a>
+                <a href="#services" class="block py-2 px-3 bg-azureBlue text-white hover:bg-navyBlue rounded-lg transition">Practice Areas</a>
+                <a href="#experience" class="block py-2 px-3 bg-azureBlue text-white hover:bg-navyBlue rounded-lg transition">Experience</a>
+                <a href="booking.html" class="block py-2 px-3 bg-azureBlue text-white hover:bg-navyBlue rounded-lg transition">Appointment</a>
+                <a href="#contact" class="block py-2 px-3 bg-azureBlue text-white hover:bg-navyBlue rounded-lg transition">Contact</a>
+                <a href="calculator.html" class="block py-2 px-3 bg-azureBlue text-white hover:bg-navyBlue rounded-lg transition">Land Calculator</a>
+                <a href="succession_calculator.html" class="block py-2 px-3 bg-azureBlue text-white hover:bg-navyBlue rounded-lg transition">Succession Calculator</a>
+            </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 py-12 w-full">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 md:p-12 text-center">
-            <h2 class="text-3xl font-extrabold text-slate-900 mb-4">Automated Land & Title Vetting</h2>
-            <p class="text-slate-600 max-w-2xl mx-auto mb-8">
-                Streamline property search reports, chain of title reviews, and document verification efficiently.
-            </p>
-            <a href="#start" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg shadow transition">
-                Get Started
-            </a>
+    <main class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <!-- Centered Login Panel -->
+        <div class="w-full max-w-md flex flex-col items-center">
+            
+            <!-- User Image & Badge -->
+            <div class="relative mb-6">
+                <div class="w-36 h-36 sm:w-40 sm:h-40 rounded-full p-2 bg-gradient-to-tr from-[#0F1B2B] via-[#101B33] to-[#87CEEB] photo-glow transition duration-300">
+                    <img 
+                        src="profile.jpg.png" 
+                        alt="A B M Rashedul Islam" 
+                        id="profileImg"
+                        onerror="this.onerror=null; this.src='https://placehold.co/400x400/C8102E/FFFFFF?text=A+B+M+Rashedul+Islam';"
+                        class="w-full h-full object-cover rounded-full border-4 border-[#1E2A38] shadow-[0_0_12px_rgba(135,206,235,0.4)]"
+                    />
+                </div>
+            </div>
+
+            <!-- Login Card -->
+            <div class="w-full glass-card-light rounded-2xl p-6 sm:p-8 shadow-2xl border-t-4 border-azureBlue text-darkText">
+                <div class="text-center mb-6">
+                    <h2 class="font-bookAntiqua text-2xl sm:text-3xl font-bold text-navyBlue">
+                        ACCOUNT LOGIN
+                    </h2>
+                    <p class="font-garamond text-base text-subtleGray font-semibold mt-1">
+                        Enter your credentials to access the portal
+                    </p>
+                </div>
+
+                <form onsubmit="event.preventDefault(); alert('Login functionality triggered!');" class="space-y-5 font-calibri">
+                    <!-- Username Field -->
+                    <div>
+                        <label for="username" class="block text-sm font-bold text-navyBlue mb-1.5">
+                            Username / Email
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                                <i class="fa-solid fa-user text-sm"></i>
+                            </span>
+                            <input 
+                                type="text" 
+                                id="username" 
+                                name="username" 
+                                required 
+                                placeholder="Enter your username"
+                                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-azureBlue focus:border-transparent text-darkText text-sm bg-white"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Password Field -->
+                    <div>
+                        <label for="password" class="block text-sm font-bold text-navyBlue mb-1.5">
+                            Password
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                                <i class="fa-solid fa-lock text-sm"></i>
+                            </span>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                required 
+                                placeholder="Enter your password"
+                                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-azureBlue focus:border-transparent text-darkText text-sm bg-white"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Options Row -->
+                    <div class="flex items-center justify-between text-xs font-semibold">
+                        <label class="flex items-center gap-2 cursor-pointer text-subtleGray">
+                            <input type="checkbox" class="rounded border-gray-300 text-azureBlue focus:ring-azureBlue">
+                            Remember me
+                        </label>
+                        <a href="#" class="text-azureBlue hover:text-navyBlue transition">Forgot Password?</a>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button 
+                        type="submit" 
+                        class="w-full bg-azureBlue hover:bg-navyBlue text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition duration-200 flex items-center justify-center gap-2 text-base"
+                    >
+                        <i class="fa-solid fa-right-to-bracket"></i> Log In
+                    </button>
+                </form>
+            </div>
+
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-slate-100 border-t border-slate-200 text-center py-4 text-sm text-slate-500">
-        &copy; 2026 Land Vetting Portal. All rights reserved.
+    <footer id="contact" class="bg-transparent text-white pt-12 pb-8 border-t border-red-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-8">
+                <div>
+                    <h3 class="font-algerian text-xl text-white mb-2">CAPITAL LAW CHAMBER</h3>
+                    <p class="font-bookAntiqua text-lg font-bold text-white mb-1">A B M RASHEDUL ISLAM</p>
+                    <p class="font-garamond text-base text-gray-200 mb-4">Associate Lawyer</p>
+                    <div class="flex space-x-3">
+                        <a href="https://www.facebook.com/rd.L.islam" target="_blank" aria-label="Facebook Profile" class="w-10 h-10 rounded-full bg-fbBlue text-white flex items-center justify-center hover:opacity-90 transition shadow-sm">
+                            <i class="fa-brands fa-facebook-f text-lg"></i>
+                        </a>
+                        <a href="https://wa.me/8801755712215" target="_blank" aria-label="WhatsApp" class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-500 transition shadow-sm">
+                            <i class="fa-brands fa-whatsapp text-lg"></i>
+                        </a>
+                        <a href="mailto:rashed.legalhq@gmail.com" aria-label="Email" class="w-10 h-10 rounded-full bg-white text-navyBlue flex items-center justify-center hover:bg-azureBlue hover:text-white transition shadow-sm">
+                            <i class="fa-regular fa-envelope text-lg"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bookAntiqua text-lg font-bold text-white mb-4">Chamber Location</h4>
+                    <div class="font-calibri text-sm text-gray-200 space-y-2 leading-relaxed">
+                        <p class="font-bold text-white">Capital Law Chamber</p>
+                        <p class="flex items-start gap-2">
+                            <i class="fa-solid fa-location-dot text-white mt-1"></i>
+                            <span>House No.15, Road No.128,<br>Gulshan-1, Dhaka-1212,<br>Bangladesh</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bookAntiqua text-lg font-bold text-white mb-4">Direct Contact</h4>
+                    <ul class="font-calibri text-sm text-gray-200 space-y-3">
+                        <li class="flex items-center gap-2">
+                            <i class="fa-solid fa-phone text-emerald-300"></i>
+                            <a href="tel:01755712215" class="hover:underline transition font-bold">01755712215</a>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fa-brands fa-whatsapp text-emerald-300"></i>
+                            <a href="https://wa.me/8801755712215" target="_blank" class="hover:underline transition font-bold">01755712215 (WhatsApp)</a>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i class="fa-regular fa-envelope text-white"></i>
+                            <a href="mailto:rashed.legalhq@gmail.com" class="hover:underline transition">rashed.legalhq@gmail.com</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bookAntiqua text-lg font-bold text-white mb-4">Chamber Hours</h4>
+                    <ul class="font-calibri text-sm text-gray-200 space-y-2">
+                        <li class="flex justify-between border-b border-red-900/60 pb-1">
+                            <span>Sun - Thu:</span>
+                            <span class="font-bold text-white">10:00 AM - 06:00 PM</span>
+                        </li>
+                        <li class="flex justify-between border-b border-red-900/60 pb-1">
+                            <span>Saturday:</span>
+                            <span class="font-bold text-cyan-300">10:00 AM - 03:00 PM</span>
+                        </li>
+                        <li class="flex justify-between text-gray-300">
+                            <span>Friday:</span>
+                            <span class="font-bold text-red-400">Closed (Weekly Holiday)</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-red-900/60 pt-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-300 font-calibri">
+                <p>&copy; <span id="currentYear"></span> A B M Rashedul Islam. Associate Lawyer, Capital Law Chamber. All Rights Reserved.</p>
+                <p class="mt-2 md:mt-0 text-gray-300">Gulshan-1, Dhaka-1212, Bangladesh</p>
+            </div>
+        </div>
     </footer>
 
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+        const mobileBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        mobileBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+    </script>
 </body>
 </html>
